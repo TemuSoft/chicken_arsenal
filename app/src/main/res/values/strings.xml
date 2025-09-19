@@ -9,4 +9,8 @@
     <string name="level_completed">Level Completed</string>
     <string name="next_level">Next Level</string>
     <string name="eggs_left">Eggs Left</string>
+    <string name="selcted">Selected</string>
+    <string name="bought">Bought</string>
+    <string name="can_buy">Can Buy</string>
+    <string name="can_not_buy">Can Not Buy</string>
 </resources>
