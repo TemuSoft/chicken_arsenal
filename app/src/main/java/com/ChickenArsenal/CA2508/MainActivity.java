@@ -84,6 +84,7 @@ public class MainActivity extends AppCompatActivity {
 
             update_UI();
         });
+        update_UI();
     }
 
     private void update_UI() {
@@ -114,6 +115,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        return;
+        finishAffinity();
     }
 }
