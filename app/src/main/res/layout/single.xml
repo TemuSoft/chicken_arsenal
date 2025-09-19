@@ -1,12 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    android:id="@+id/layout_card"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:layout_weight="1"
+    android:gravity="center">
 
     <LinearLayout
+        android:layout_height="match_parent"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_marginTop="5dp"
+        android:gravity="center"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/title"
@@ -15,84 +20,41 @@
             android:text="@string/defaults"
             android:textSize="16dp"
             android:theme="@style/text1Theme" />
-    </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/layout_single"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:layout_width="70dp"
-        android:layout_height="70dp"
-        android:background="@drawable/nife_bg"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-        <ImageView
-            android:id="@+id/knife"
-            android:background="@drawable/nife_0"
-            android:layout_width="50dp"
-            android:layout_height="50dp"/>
-    </LinearLayout>
+        <LinearLayout
+            android:id="@+id/layout_egg"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:background="@drawable/shop_green"
+            android:gravity="center">
 
-    <LinearLayout
-        android:id="@+id/layout_coin"
-        android:layout_width="60dp"
-        android:layout_height="25dp"
-        android:layout_marginTop="70dp"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:background="@drawable/coin_bg">
-        <TextView
-            android:id="@+id/coin"
-            android:layout_width="wrap_content"
+            <ImageView
+                android:id="@+id/egg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="3dp"
+                android:padding="10dp"
+                android:src="@drawable/egg_0" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="400"
-            android:textSize="19dp"
-            android:gravity="center"
-            android:textColor="@color/white"
-            android:theme="@style/buttonTheme"/>
+            android:gravity="center">
 
-        <ImageView
-            android:layout_marginLeft="5dp"
-            android:src="@drawable/apple"
-            android:layout_width="20dp"
-            android:layout_height="20dp"/>
+            <TextView
+                android:id="@+id/required_coin"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="609"
+                android:textSize="16dp"
+                android:theme="@style/text0Theme" />
+
+            <ImageView
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_marginLeft="5dp"
+                android:src="@drawable/egg_0" />
+        </LinearLayout>
     </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/layout_selected"
-        android:visibility="invisible"
-        android:layout_width="60dp"
-        android:layout_height="25dp"
-        android:layout_marginTop="70dp"
-        android:gravity="center"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        android:background="@drawable/coin_bg">
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/selected"
-            android:textSize="10dp"
-            android:gravity="center"
-            android:textColor="@color/white"
-            android:theme="@style/buttonTheme"/>
-    </LinearLayout>
-
-    <ImageView
-        android:id="@+id/lock"
-        android:src="@drawable/lock"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
-
 </LinearLayout>
