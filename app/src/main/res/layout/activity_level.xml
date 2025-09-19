@@ -10,6 +10,13 @@
 
     <LinearLayout
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:background="@drawable/cloud_collection"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_margin="30dp"
         android:elevation="1dp"
@@ -27,11 +34,11 @@
                 android:gravity="left">
 
                 <ImageView
-                    android:id="@+id/shop"
+                    android:id="@+id/home"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="end"
-                    android:src="@drawable/shop" />
+                    android:src="@drawable/home" />
 
             </LinearLayout>
 

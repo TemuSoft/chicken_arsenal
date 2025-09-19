@@ -5,4 +5,8 @@
     <string name="defaults">Default</string>
     <string name="select_level">Select Level</string>
     <string name="start_game">Start Game</string>
+    <string name="level">Level</string>
+    <string name="level_completed">Level Completed</string>
+    <string name="next_level">Next Level</string>
+    <string name="eggs_left">Eggs Left</string>
 </resources>
