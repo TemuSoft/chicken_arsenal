@@ -9,8 +9,15 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center">
-        <include layout="@layout/single"/>
-        <include layout="@layout/single"/>
-        <include layout="@layout/single"/>
+
+        <include layout="@layout/single_level" />
+
+        <include layout="@layout/single_level" />
+
+        <include layout="@layout/single_level" />
+
+        <include layout="@layout/single_level" />
+
+        <include layout="@layout/single_level" />
     </LinearLayout>
 </LinearLayout>
