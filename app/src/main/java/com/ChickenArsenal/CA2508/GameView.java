@@ -32,8 +32,11 @@ public class GameView extends View {
     Bitmap cloud, sun, ground, egg, container, basket, danger_0, danger_1, danger_2;
     int c_w, c_h, s_w_h, g_w, g_h, e_w, e_h, b_w, b_h, con_w, con_h;
     int dan_w_0, dan_h_0, dan_w_1, dan_h_1, dan_w_2, dan_h_2;
+    int s_x, s_y;
+    int game_scree_w;
 
     ArrayList<ArrayList<Integer>> cloud_data = new ArrayList<>();
+    ArrayList<Integer> ground_data = new ArrayList<>();
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -82,6 +85,13 @@ public class GameView extends View {
         dan_w_2 = danger_2.getWidth();
         dan_h_2 = danger_2.getHeight();
 
+        if (s_w_h > c_w)
+            s_w_h = c_w;
+        if (s_w_h > c_h)
+            s_w_h = c_h;
+
+        game_scree_w = screenY * 2;
+
         cloud = Bitmap.createScaledBitmap(cloud, c_w, c_h, false);
         sun = Bitmap.createScaledBitmap(sun, s_w_h, s_w_h, false);
         ground = Bitmap.createScaledBitmap(ground, g_w, g_h, false);
@@ -93,6 +103,49 @@ public class GameView extends View {
         danger_2 = Bitmap.createScaledBitmap(danger_0, dan_w_2, dan_w_2, false);
 
         setSpeed();
+        add_cloud_data();
+        add_ground_data();
+    }
+
+    private void add_ground_data() {
+        int gap = 24 * g_w / 419;
+        int x = -gap;
+        while (x + g_w < game_scree_w) {
+            ground_data.add(x);
+
+            x += g_w - gap * 2;
+        }
+    }
+
+    private void add_cloud_data() {
+        int amount = game_scree_w / c_w;
+        int last_x = 0;
+        for (int i = 0; i < amount; i++) {
+            int last_y = 0;
+            for (int j = 0; j < 4; j++) {
+                int w = random.nextInt(c_w * 5 / 6) + c_w / 6;
+                int h = w * c_h / c_w;
+                int x = last_x + (c_w - w) / 2;
+                int y = last_y + (c_h - h) / 2;
+
+                ArrayList<Integer> data = new ArrayList<>();
+                data.add(x);
+                data.add(y);
+                data.add(w);
+                data.add(h);
+                data.add(0);
+                last_y += c_h;
+
+                if (i == 1 && j == 1)
+                    continue;
+
+                cloud_data.add(data);
+            }
+            last_x += c_w;
+        }
+
+        s_x = screenX / 2 - s_w_h / 2;
+        s_y = c_h + 2;
     }
 
     public void onDraw(Canvas canvas) {
@@ -100,7 +153,24 @@ public class GameView extends View {
         paint.setStyle(Paint.Style.FILL);
         canvas.drawColor(Color.TRANSPARENT);
 
+        for (int i = 0; i < ground_data.size(); i++) {
+            int x = ground_data.get(i);
+            canvas.drawBitmap(ground, x, screenY - g_h, paint);
+        }
 
+        for (int i = 0; i < cloud_data.size(); i++) {
+            int x = cloud_data.get(i).get(0);
+            int y = cloud_data.get(i).get(1);
+            int w = cloud_data.get(i).get(2);
+            int h = cloud_data.get(i).get(3);
+            if (x + w < 0 || x > screenX)
+                continue;
+
+            Bitmap cl = Bitmap.createScaledBitmap(cloud, w, h, false);
+            canvas.drawBitmap(cl, x, y, paint);
+        }
+        if (s_x + s_w_h > 0 && s_x < screenX)
+            canvas.drawBitmap(sun, s_x, s_y, paint);
     }
 
     private void setSpeed() {
