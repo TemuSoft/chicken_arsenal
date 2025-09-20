@@ -37,6 +37,7 @@ public class GameView extends View {
     int con_x, con_y;
     int basket_x, basket_y;
     int danger_init_x, gap, game_scree_last_x;
+    int move_left = -1;
 
     ArrayList<Bitmap> dangers = new ArrayList<>();
     ArrayList<ArrayList<Integer>> danger_data = new ArrayList<>();
@@ -99,7 +100,6 @@ public class GameView extends View {
         con_x = screenX / 2 - con_w / 2;
         con_y = floor_y - con_h;
         danger_init_x = con_x + con_w + screenX / 3 + random.nextInt(screenX / 3);
-        danger_init_x = 0;
         gap = con_w / 4;
 
         cloud = Bitmap.createScaledBitmap(cloud, c_w, c_h, false);
@@ -169,35 +169,59 @@ public class GameView extends View {
             danger_init_x += basket_w + gap * 2;
         }
         game_scree_last_x = danger_init_x;
-        add_ground_data();
-        add_cloud_data();
+        add_ground_data(true);
+        add_cloud_data(true);
     }
 
-    private void add_ground_data() {
-        for (int i = 0; i < ground_data.size(); i++) {
-            if (ground_data.get(i) + g_w < 0)
-                ground_data.remove(i);
-        }
+    private void add_ground_data(boolean multiple) {
+        int x = ground_data.isEmpty() ? 0 : ground_data.get(ground_data.size() - 1);
+
         int gap = 24 * g_w / 419;
-        int x = -gap;
-        while (x + g_w < game_scree_last_x) {
-            ground_data.add(x);
+        x -= gap;
 
-            x += g_w - gap * 2;
+        if (multiple) {
+            while (x + g_w < game_scree_last_x) {
+                ground_data.add(x);
+                x += g_w - gap * 2;
+            }
+        } else {
+            ground_data.add(x);
         }
     }
 
-    private void add_cloud_data() {
-        for (int i = 0; i < cloud_data.size(); i++) {
-            if (cloud_data.get(i).get(0) + cloud_data.get(i).get(2) < 0)
-                cloud_data.remove(i);
-        }
+    private void add_cloud_data(boolean multiple) {
+        int last_x = cloud_data.isEmpty() ? 0 : cloud_data.get(cloud_data.size() - 1).get(4);
 
-        int amount = game_scree_last_x / c_w;
-        int last_x = 0;
-        for (int i = 0; i < amount; i++) {
+        if (multiple) {
+            int amount = screenX * 3 / 2;
+            for (int i = 0; i < amount; i++) {
+                int last_y = 0;
+                for (int j = 0; j < 3; j++) {
+                    int w = random.nextInt(c_w * 5 / 6) + c_w / 6;
+                    int h = w * c_h / c_w;
+                    int x = last_x + (c_w - w) / 2;
+                    int y = last_y + (c_h - h) / 2;
+
+                    ArrayList<Integer> data = new ArrayList<>();
+                    data.add(x);
+                    data.add(y);
+                    data.add(w);
+                    data.add(h);
+                    data.add(last_x + c_w * 3 / 2);
+                    last_y += c_h * 3 / 2;
+
+                    if (i == 1 && j == 1) continue;
+
+                    cloud_data.add(data);
+                }
+                last_x += c_w * 3 / 2;
+            }
+
+            s_x = screenX / 2 - s_w_h / 2;
+            s_y = c_h + 2;
+        } else {
             int last_y = 0;
-            for (int j = 0; j < 4; j++) {
+            for (int j = 0; j < 3; j++) {
                 int w = random.nextInt(c_w * 5 / 6) + c_w / 6;
                 int h = w * c_h / c_w;
                 int x = last_x + (c_w - w) / 2;
@@ -208,17 +232,12 @@ public class GameView extends View {
                 data.add(y);
                 data.add(w);
                 data.add(h);
-                last_y += c_h;
-
-                if (i == 1 && j == 1) continue;
+                data.add(last_x + c_w * 3 / 2);
+                last_y += c_h * 3 / 2;
 
                 cloud_data.add(data);
             }
-            last_x += c_w;
         }
-
-        s_x = screenX / 2 - s_w_h / 2;
-        s_y = c_h + 2;
     }
 
     public void onDraw(Canvas canvas) {
@@ -243,6 +262,7 @@ public class GameView extends View {
         }
         if (s_x + s_w_h > 0 && s_x < screenX) canvas.drawBitmap(sun, s_x, s_y, paint);
 
+        int[] ww = new int[]{dan_w_0, dan_w_1, dan_w_2};
         int[] hh = new int[]{dan_h_0, dan_h_1, dan_h_2};
         for (int i = 0; i < danger_data.size(); i++) {
             int x = danger_data.get(i).get(0);
@@ -250,6 +270,9 @@ public class GameView extends View {
             int count = danger_data.get(i).get(2);
             int index = danger_data.get(i).get(3);
             int height = danger_data.get(i).get(4);
+
+            if (x + ww[index] < 0 || x > screenX) continue;
+
 
             y = floor_y - hh[index];
 
@@ -259,8 +282,11 @@ public class GameView extends View {
             }
         }
 
-        canvas.drawBitmap(container, con_x, con_y, paint);
-        canvas.drawBitmap(basket, basket_x, basket_y, paint);
+        if (con_x + con_w > 0 && con_x < screenX)
+            canvas.drawBitmap(container, con_x, con_y, paint);
+
+        if (basket_x + basket_w > 0 && basket_x < screenX)
+            canvas.drawBitmap(basket, basket_x, basket_y, paint);
 
     }
 
@@ -270,7 +296,47 @@ public class GameView extends View {
     }
 
     public void update() {
+        move_bitmaps();
+        remove_left_off_screen();
 
         invalidate();
+    }
+
+    private void remove_left_off_screen() {
+        for (int i = 0; i < ground_data.size(); i++) {
+            if (ground_data.get(i) + g_w < 0) {
+                ground_data.remove(i);
+                break;
+            }
+        }
+
+        for (int i = 0; i < cloud_data.size(); i++) {
+            if (cloud_data.get(i).get(0) + cloud_data.get(i).get(2) < 0) {
+                cloud_data.remove(i);
+                break;
+            }
+        }
+    }
+
+    private void move_bitmaps() {
+        s_x += xSpeed * move_left;
+        con_x += xSpeed * move_left;
+        basket_x += xSpeed * move_left;
+        danger_init_x += xSpeed * move_left;
+        game_scree_last_x += xSpeed * move_left;
+
+
+
+        for (int i = 0; i < danger_data.size(); i++) {
+            int x = danger_data.get(i).get(0);
+            danger_data.get(i).set(i, x + xSpeed * move_left);
+        }
+
+        for (int i = 0; i < cloud_data.size(); i++) {
+            int x = cloud_data.get(i).get(0);
+            cloud_data.get(i).set(0, x + xSpeed * move_left);
+        }
+
+        ground_data.replaceAll(integer -> integer + xSpeed * move_left);
     }
 }
