@@ -26,15 +26,19 @@ public class GameView extends View {
     private int xSpeed, ySpeed;
     private Context context;
     int lastLevelActive, playLevel;
-    int total_eggs, remain_eggs;
+    int total_eggs, remain_eggs, total_danger_type, danger_amount;
 
     int active_egg;
     Bitmap cloud, sun, ground, egg, container, basket, danger_0, danger_1, danger_2;
-    int c_w, c_h, s_w_h, g_w, g_h, e_w, e_h, b_w, b_h, con_w, con_h;
+    int c_w, c_h, s_w_h, g_w, g_h, e_w, e_h, basket_w, basket_h, con_w, con_h;
     int dan_w_0, dan_h_0, dan_w_1, dan_h_1, dan_w_2, dan_h_2;
     int s_x, s_y;
-    int game_scree_w;
+    int ground_y, floor_y;
+    int con_x, con_y;
+    int basK_t, basket_y;
+    int danger_init_x, gap, game_scree_last_x;
 
+    ArrayList<ArrayList<Integer>> danger_data = new ArrayList<>();
     ArrayList<ArrayList<Integer>> cloud_data = new ArrayList<>();
     ArrayList<Integer> ground_data = new ArrayList<>();
 
@@ -51,8 +55,8 @@ public class GameView extends View {
         playLevel = sharedPreferences.getInt("playLevel", 1);
         active_egg = sharedPreferences.getInt("active_egg", 0);
 
-        total_eggs = 5;
-        remain_eggs = 2;
+        total_eggs = playLevel / 3 + 2;
+        remain_eggs = total_eggs;
 
         int e = context.getResources().getIdentifier("egg_" + active_egg, "drawable", context.getPackageName());
         cloud = BitmapFactory.decodeResource(res, R.drawable.cloud);
@@ -75,8 +79,8 @@ public class GameView extends View {
         e_h = egg.getHeight();
         con_w = container.getWidth();
         con_h = container.getHeight();
-        b_w = basket.getWidth();
-        b_h = basket.getHeight();
+        basket_w = basket.getWidth();
+        basket_h = basket.getHeight();
 
         dan_w_0 = danger_0.getWidth();
         dan_h_0 = danger_0.getHeight();
@@ -85,32 +89,83 @@ public class GameView extends View {
         dan_w_2 = danger_2.getWidth();
         dan_h_2 = danger_2.getHeight();
 
-        if (s_w_h > c_w)
-            s_w_h = c_w;
-        if (s_w_h > c_h)
-            s_w_h = c_h;
+        if (s_w_h > c_w) s_w_h = c_w;
+        if (s_w_h > c_h) s_w_h = c_h;
 
-        game_scree_w = screenY * 2;
+        ground_y = screenY - g_h;
+        floor_y = ground_y + g_h / 2;
+
+        con_x = screenX / 2 - con_w / 2;
+        con_y = floor_y - con_h;
+        danger_init_x = con_x + con_w + screenX / 3 + random.nextInt(screenX / 3);
+        gap = con_w / 4;
 
         cloud = Bitmap.createScaledBitmap(cloud, c_w, c_h, false);
         sun = Bitmap.createScaledBitmap(sun, s_w_h, s_w_h, false);
         ground = Bitmap.createScaledBitmap(ground, g_w, g_h, false);
         egg = Bitmap.createScaledBitmap(egg, e_w, e_h, false);
         container = Bitmap.createScaledBitmap(container, con_w, con_h, false);
-        basket = Bitmap.createScaledBitmap(basket, b_w, b_h, false);
+        basket = Bitmap.createScaledBitmap(basket, basket_w, basket_h, false);
         danger_0 = Bitmap.createScaledBitmap(danger_0, dan_w_0, dan_w_0, false);
         danger_1 = Bitmap.createScaledBitmap(danger_0, dan_w_1, dan_w_1, false);
         danger_2 = Bitmap.createScaledBitmap(danger_0, dan_w_2, dan_w_2, false);
 
         setSpeed();
-        add_cloud_data();
+        add_danger_data();
+    }
+
+    private void add_danger_data() {
+        total_danger_type = (playLevel < 10) ? 2 : 3;
+        danger_amount = Math.min(playLevel + 7, 15);
+        int[] ww = new int[]{dan_w_0, dan_w_1, dan_w_2};
+        int[] hh = new int[]{dan_h_0, dan_h_1, dan_h_2};
+
+        int counter = 0;
+        boolean basket_added = false;
+        while (danger_amount > 1) {
+            int index = random.nextInt(3);
+            int max;
+            if (index == 0) max = 3;
+            else if (index == 1) max = 5;
+            else max = 2;
+            int count = random.nextInt(max) + 1;
+            if (count > danger_amount) count = danger_amount;
+
+            danger_amount -= count;
+
+            ArrayList<Integer> data = new ArrayList<>();
+            data.add(danger_init_x);
+            data.add(floor_y - hh[index] * count);
+            data.add(count);
+            data.add(index);
+            danger_data.add(data);
+
+            danger_init_x += ww[index] + gap * 2;
+            counter++;
+
+            if (random.nextInt(3) == 1 && !basket_added) {
+                basK_t = danger_init_x;
+                basket_y = floor_y - basket_h;
+                danger_init_x += basket_w + gap * 2;
+                basket_added = true;
+            }
+        }
+
+        if (!basket_added) {
+            basK_t = danger_init_x;
+            basket_y = floor_y - basket_h;
+            danger_init_x += basket_w + gap * 2;
+        }
+        game_scree_last_x = danger_init_x;
         add_ground_data();
+        add_cloud_data();
     }
 
     private void add_ground_data() {
+        ground_data = new ArrayList<>();
         int gap = 24 * g_w / 419;
         int x = -gap;
-        while (x + g_w < game_scree_w) {
+        while (x + g_w < game_scree_last_x) {
             ground_data.add(x);
 
             x += g_w - gap * 2;
@@ -118,7 +173,7 @@ public class GameView extends View {
     }
 
     private void add_cloud_data() {
-        int amount = game_scree_w / c_w;
+        int amount = game_scree_last_x / c_w;
         int last_x = 0;
         for (int i = 0; i < amount; i++) {
             int last_y = 0;
@@ -136,8 +191,7 @@ public class GameView extends View {
                 data.add(0);
                 last_y += c_h;
 
-                if (i == 1 && j == 1)
-                    continue;
+                if (i == 1 && j == 1) continue;
 
                 cloud_data.add(data);
             }
@@ -155,7 +209,7 @@ public class GameView extends View {
 
         for (int i = 0; i < ground_data.size(); i++) {
             int x = ground_data.get(i);
-            canvas.drawBitmap(ground, x, screenY - g_h, paint);
+            canvas.drawBitmap(ground, x, ground_y, paint);
         }
 
         for (int i = 0; i < cloud_data.size(); i++) {
@@ -163,14 +217,12 @@ public class GameView extends View {
             int y = cloud_data.get(i).get(1);
             int w = cloud_data.get(i).get(2);
             int h = cloud_data.get(i).get(3);
-            if (x + w < 0 || x > screenX)
-                continue;
+            if (x + w < 0 || x > screenX) continue;
 
             Bitmap cl = Bitmap.createScaledBitmap(cloud, w, h, false);
             canvas.drawBitmap(cl, x, y, paint);
         }
-        if (s_x + s_w_h > 0 && s_x < screenX)
-            canvas.drawBitmap(sun, s_x, s_y, paint);
+        if (s_x + s_w_h > 0 && s_x < screenX) canvas.drawBitmap(sun, s_x, s_y, paint);
     }
 
     private void setSpeed() {
