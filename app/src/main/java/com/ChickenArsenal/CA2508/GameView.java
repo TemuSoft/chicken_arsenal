@@ -38,6 +38,7 @@ public class GameView extends View {
     int basket_x, basket_y;
     int danger_init_x, gap, game_scree_last_x;
     int move_left = -1;
+    int in_col_clouds = 3, removed_cloud;
 
     ArrayList<Bitmap> dangers = new ArrayList<>();
     ArrayList<ArrayList<Integer>> danger_data = new ArrayList<>();
@@ -174,7 +175,7 @@ public class GameView extends View {
     }
 
     private void add_ground_data(boolean multiple) {
-        int x = ground_data.isEmpty() ? 0 : ground_data.get(ground_data.size() - 1);
+        int x = ground_data.isEmpty() ? 0 : ground_data.get(ground_data.size() - 1) + g_w;
 
         int gap = 24 * g_w / 419;
         x -= gap;
@@ -190,7 +191,7 @@ public class GameView extends View {
     }
 
     private void add_cloud_data(boolean multiple) {
-        int last_x = cloud_data.isEmpty() ? 0 : cloud_data.get(cloud_data.size() - 1).get(4);
+        int last_x = cloud_data.isEmpty() ? 0 : cloud_data.get(cloud_data.size() - 1).get(4) + c_w;
 
         if (multiple) {
             int amount = screenX * 3 / 2;
@@ -212,7 +213,8 @@ public class GameView extends View {
 
                     if (i == 1 && j == 1) continue;
 
-                    cloud_data.add(data);
+                    if (random.nextInt(4) != 1)
+                        cloud_data.add(data);
                 }
                 last_x += c_w * 3 / 2;
             }
@@ -306,6 +308,7 @@ public class GameView extends View {
         for (int i = 0; i < ground_data.size(); i++) {
             if (ground_data.get(i) + g_w < 0) {
                 ground_data.remove(i);
+                add_ground_data(false);
                 break;
             }
         }
@@ -313,6 +316,11 @@ public class GameView extends View {
         for (int i = 0; i < cloud_data.size(); i++) {
             if (cloud_data.get(i).get(0) + cloud_data.get(i).get(2) < 0) {
                 cloud_data.remove(i);
+                removed_cloud++;
+                if (removed_cloud == in_col_clouds) {
+                    add_cloud_data(false);
+                    removed_cloud = 0;
+                }
                 break;
             }
         }
@@ -325,11 +333,9 @@ public class GameView extends View {
         danger_init_x += xSpeed * move_left;
         game_scree_last_x += xSpeed * move_left;
 
-
-
         for (int i = 0; i < danger_data.size(); i++) {
             int x = danger_data.get(i).get(0);
-            danger_data.get(i).set(i, x + xSpeed * move_left);
+            danger_data.get(i).set(0, x + xSpeed * move_left);
         }
 
         for (int i = 0; i < cloud_data.size(); i++) {
