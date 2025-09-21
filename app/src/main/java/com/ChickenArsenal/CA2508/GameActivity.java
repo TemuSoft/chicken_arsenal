@@ -205,13 +205,16 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                processActionDown(x, y);
+                if (!gameView.game_over && !gameView.game_won && !gameView.showing_whole_page)
+                    processActionDown(x, y);
                 break;
             case MotionEvent.ACTION_MOVE:
-                processActionMove(x, y);
+                if (!gameView.game_over && !gameView.game_won && !gameView.showing_whole_page)
+                    processActionMove(x, y);
                 break;
             case MotionEvent.ACTION_UP:
-                processActionUp(x, y);
+                if (!gameView.game_over && !gameView.game_won && !gameView.showing_whole_page)
+                    processActionUp(x, y);
                 break;
         }
         return true;

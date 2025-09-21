@@ -34,8 +34,10 @@ public class GameView extends View {
     int dan_w_0, dan_h_0, dan_w_1, dan_h_1, dan_w_2, dan_h_2;
     int s_y, ground_y, floor_y, con_y, basket_y;
     int danger_init_x, gap, game_scree_last_x;
-    int move_left = -1;
+    int move_left = 0;
     int in_col_clouds = 3, removed_cloud;
+    boolean showing_whole_page = true;
+    int showing_distance, showing_distance_remain, showing_move_left = -1;
 
     ArrayList<Bitmap> clouds = new ArrayList<>();
     ArrayList<Bitmap> dangers = new ArrayList<>();
@@ -141,11 +143,7 @@ public class GameView extends View {
 
         int[] ww = new int[]{dan_w_0, dan_w_1, dan_w_2};
         int[] hh = new int[]{dan_h_0, dan_h_1, dan_h_2};
-        int[][] overlap_h = new int[][]{
-                {47, 177},
-                {40, 126},
-                {25, 221},
-        };
+        int[][] overlap_h = new int[][]{{47, 177}, {40, 126}, {25, 221},};
 
         boolean basket_added = false;
         while (danger_amount > 1) {
@@ -185,8 +183,12 @@ public class GameView extends View {
             danger_init_x += basket_w + gap * 2;
         }
         game_scree_last_x = danger_init_x;
+        showing_distance = game_scree_last_x - screenX;
+        showing_distance_remain = showing_distance;
         add_ground_data(true);
         add_cloud_data(true);
+
+        move_backward_whole_bitmap();
     }
 
     private void add_ground_data(boolean multiple) {
@@ -196,7 +198,7 @@ public class GameView extends View {
         x -= gap;
 
         if (multiple) {
-            while (x + g_w < game_scree_last_x) {
+            while (x <= game_scree_last_x) {
                 ground_data.add(x);
                 x += g_w - gap * 2;
             }
@@ -236,8 +238,7 @@ public class GameView extends View {
                         continue;
                     }
 
-                    if (random.nextInt(5) != 1)
-                        cloud_data.add(data);
+                    if (random.nextInt(5) != 1) cloud_data.add(data);
                 }
                 last_x += c_w * 3 / 2;
             }
@@ -334,8 +335,11 @@ public class GameView extends View {
     }
 
     public void update() {
-        move_bitmaps();
-        remove_left_off_screen();
+        if (showing_whole_page) move_backward_whole_bitmap();
+        else {
+            move_bitmaps();
+            remove_left_off_screen();
+        }
 
         invalidate();
     }
@@ -419,5 +423,29 @@ public class GameView extends View {
         basket_data.replaceAll(integer -> integer + xSpeed * move_left);
         sun_data.replaceAll(integer -> integer + xSpeed * move_left);
         ground_data.replaceAll(integer -> integer + xSpeed * move_left);
+    }
+
+    private void move_backward_whole_bitmap() {
+        showing_distance_remain += xSpeed * showing_move_left;
+        danger_init_x += xSpeed * showing_move_left;
+        game_scree_last_x += xSpeed * showing_move_left;
+
+        for (int i = 0; i < danger_data.size(); i++) {
+            int x = danger_data.get(i).get(0);
+            danger_data.get(i).set(0, x + xSpeed * showing_move_left);
+        }
+
+        for (int i = 0; i < cloud_data.size(); i++) {
+            int x = cloud_data.get(i).get(0);
+            cloud_data.get(i).set(0, x + xSpeed * showing_move_left);
+        }
+
+        container_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
+        basket_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
+        sun_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
+        ground_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
+
+        if (showing_distance_remain < 0) showing_move_left = 1;
+        else if (showing_distance_remain >= showing_distance) showing_whole_page = false;
     }
 }
