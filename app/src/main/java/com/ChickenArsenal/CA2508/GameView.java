@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Rect;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -29,7 +30,7 @@ public class GameView extends View {
     int total_eggs, remain_eggs, total_danger_type, danger_amount;
 
     int active_egg;
-    Bitmap cloud, sun, ground, egg, container, basket, danger_0, danger_1, danger_2;
+    Bitmap cloud, sun, ground, egg, container_0, container_1, basket, danger_0, danger_1, danger_2;
     int c_w, c_h, s_w_h, g_w, g_h, e_w, e_h, basket_w, basket_h, con_w, con_h;
     int dan_w_0, dan_h_0, dan_w_1, dan_h_1, dan_w_2, dan_h_2;
     int s_y, ground_y, floor_y, con_y, basket_y;
@@ -47,6 +48,9 @@ public class GameView extends View {
     ArrayList<Integer> basket_data = new ArrayList<>();
     ArrayList<Integer> container_data = new ArrayList<>();
     ArrayList<Integer> ground_data = new ArrayList<>();
+
+    int tap_x, tap_y, current_x, current_y;
+    boolean getting_trajectory = false, egg_on_move = false;
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -69,7 +73,8 @@ public class GameView extends View {
         sun = BitmapFactory.decodeResource(res, R.drawable.sun);
         ground = BitmapFactory.decodeResource(res, R.drawable.ground);
         egg = BitmapFactory.decodeResource(res, e);
-        container = BitmapFactory.decodeResource(res, R.drawable.container);
+        container_0 = BitmapFactory.decodeResource(res, R.drawable.container_0);
+        container_1 = BitmapFactory.decodeResource(res, R.drawable.container_1);
         basket = BitmapFactory.decodeResource(res, R.drawable.basket);
 
         danger_0 = BitmapFactory.decodeResource(res, R.drawable.danger_0);
@@ -83,8 +88,8 @@ public class GameView extends View {
         g_h = ground.getHeight();
         e_w = egg.getWidth();
         e_h = egg.getHeight();
-        con_w = container.getWidth();
-        con_h = container.getHeight();
+        con_w = container_0.getWidth();
+        con_h = container_0.getHeight();
         basket_w = basket.getWidth();
         basket_h = basket.getHeight();
 
@@ -108,7 +113,8 @@ public class GameView extends View {
         sun = Bitmap.createScaledBitmap(sun, s_w_h, s_w_h, false);
         ground = Bitmap.createScaledBitmap(ground, g_w, g_h, false);
         egg = Bitmap.createScaledBitmap(egg, e_w, e_h, false);
-        container = Bitmap.createScaledBitmap(container, con_w, con_h, false);
+        container_0 = Bitmap.createScaledBitmap(container_0, con_w, con_h, false);
+        container_1 = Bitmap.createScaledBitmap(container_1, con_w, con_h, false);
         basket = Bitmap.createScaledBitmap(basket, basket_w, basket_h, false);
         danger_0 = Bitmap.createScaledBitmap(danger_0, dan_w_0, dan_h_0, false);
         danger_1 = Bitmap.createScaledBitmap(danger_1, dan_w_1, dan_h_1, false);
@@ -306,7 +312,10 @@ public class GameView extends View {
         for (int i = 0; i < container_data.size(); i++) {
             int x = container_data.get(i);
             if (x + con_w < 0 || x > screenX) continue;
-            canvas.drawBitmap(container, x, con_y, paint);
+            if (getting_trajectory)
+                canvas.drawBitmap(container_1, x, con_y, paint);
+            else
+                canvas.drawBitmap(container_0, x, con_y, paint);
         }
 
         int[] ww = new int[]{dan_w_0, dan_w_1, dan_w_2};
@@ -447,5 +456,24 @@ public class GameView extends View {
 
         if (showing_distance_remain < 0) showing_move_left = 1;
         else if (showing_distance_remain >= showing_distance) showing_whole_page = false;
+    }
+
+    public Rect getContainerCollision() {
+        int x = container_data.get(0);
+        int y = con_y;
+        int xi = 0;
+        int yi = 30 * con_h / 150;
+        int w = 55 * con_w / 115;
+        int h = 60 * con_h / 150;
+
+        return new Rect(x + xi, y + yi, x + xi + w, y + yi + h);
+    }
+
+    public void calculate_trajectory() {
+
+    }
+
+    public void start_move_egg() {
+
     }
 }

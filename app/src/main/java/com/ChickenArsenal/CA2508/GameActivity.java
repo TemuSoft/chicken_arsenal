@@ -202,34 +202,48 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
     public boolean onTouch(View v, MotionEvent event) {
         int x = (int) event.getX();
         int y = (int) event.getY();
+        boolean can_click = !gameView.game_over && !gameView.game_won && !gameView.showing_whole_page && !gameView.egg_on_move;
 
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                if (!gameView.game_over && !gameView.game_won && !gameView.showing_whole_page)
-                    processActionDown(x, y);
+                if (can_click) processActionDown(x, y);
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (!gameView.game_over && !gameView.game_won && !gameView.showing_whole_page)
-                    processActionMove(x, y);
+                if (can_click && gameView.getting_trajectory) processActionMove(x, y);
                 break;
             case MotionEvent.ACTION_UP:
-                if (!gameView.game_over && !gameView.game_won && !gameView.showing_whole_page)
-                    processActionUp(x, y);
+                if (can_click && gameView.getting_trajectory) processActionUp(x, y);
                 break;
         }
         return true;
     }
 
     private void processActionDown(int x, int y) {
+        Rect clicked = new Rect(x, y, x, y);
+        if (Rect.intersects(clicked, gameView.getContainerCollision())) {
+            gameView.tap_x = x;
+            gameView.tap_y = y;
+            gameView.current_x = x;
+            gameView.current_y = y;
 
+            gameView.getting_trajectory = true;
+        }
     }
 
     private void processActionUp(int xp, int yp) {
         Rect clicked = new Rect(xp, yp, xp, yp);
 
+        gameView.getting_trajectory = false;
+        gameView.start_move_egg();
     }
 
     private void processActionMove(int x, int y) {
+        int diff_x = gameView.current_x - x;
+        int diff_y = gameView.current_y - y;
 
+        gameView.current_x = x;
+        gameView.current_y = y;
+
+        gameView.calculate_trajectory();
     }
 }
