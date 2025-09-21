@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Path;
 import android.graphics.Rect;
 import android.view.View;
 
@@ -34,6 +35,7 @@ public class GameView extends View {
     int c_w, c_h, s_w_h, g_w, g_h, e_w, e_h, basket_w, basket_h, con_w, con_h;
     int dan_w_0, dan_h_0, dan_w_1, dan_h_1, dan_w_2, dan_h_2;
     int s_y, ground_y, floor_y, con_y, basket_y;
+    int egg_x, egg_y;
     int danger_init_x, gap, game_scree_last_x;
     int move_left = 0;
     int in_col_clouds = 3, removed_cloud;
@@ -48,9 +50,12 @@ public class GameView extends View {
     ArrayList<Integer> basket_data = new ArrayList<>();
     ArrayList<Integer> container_data = new ArrayList<>();
     ArrayList<Integer> ground_data = new ArrayList<>();
+    ArrayList<ArrayList<Integer>> trajectory = new ArrayList<>();
 
     int tap_x, tap_y, current_x, current_y;
     boolean getting_trajectory = false, egg_on_move = false;
+    int egg_con_x, egg_con_y, egg_con_xi, egg_con_yi, egg_con_w, egg_con_h;
+
 
     public GameView(Context mContext, int scX, int scY, Resources res, int level_amount) {
         super(mContext);
@@ -195,6 +200,15 @@ public class GameView extends View {
         add_cloud_data(true);
 
         move_backward_whole_bitmap();
+
+
+        egg_con_x = container_data.get(0);
+        egg_con_y = con_y;
+        egg_con_xi = 0;
+        egg_con_yi = 30 * con_h / 150;
+        egg_con_w = 55 * con_w / 115;
+        egg_con_h = 60 * con_h / 150;
+
     }
 
     private void add_ground_data(boolean multiple) {
@@ -309,15 +323,6 @@ public class GameView extends View {
             canvas.drawBitmap(basket, x, basket_y, paint);
         }
 
-        for (int i = 0; i < container_data.size(); i++) {
-            int x = container_data.get(i);
-            if (x + con_w < 0 || x > screenX) continue;
-            if (getting_trajectory)
-                canvas.drawBitmap(container_1, x, con_y, paint);
-            else
-                canvas.drawBitmap(container_0, x, con_y, paint);
-        }
-
         int[] ww = new int[]{dan_w_0, dan_w_1, dan_w_2};
         int[] hh = new int[]{dan_h_0, dan_h_1, dan_h_2};
         for (int i = 0; i < danger_data.size(); i++) {
@@ -336,6 +341,24 @@ public class GameView extends View {
                 y -= height;
             }
         }
+
+        if (trajectory.size() > 1) {
+            paint.setStrokeWidth(10);
+            paint.setStyle(Paint.Style.STROKE);
+            paint.setColor(getResources().getColor(R.color.white));
+            canvas.drawPath(arrayList_to_Path(), paint);
+        }
+
+        if (egg_on_move) {
+            canvas.drawBitmap(egg, egg_x, egg_y, paint);
+        }
+
+        for (int i = 0; i < container_data.size(); i++) {
+            int x = container_data.get(i);
+            if (x + con_w < 0 || x > screenX) continue;
+            if (egg_on_move && i == 0) canvas.drawBitmap(container_0, x, con_y, paint);
+            else canvas.drawBitmap(container_1, x, con_y, paint);
+        }
     }
 
     private void setSpeed() {
@@ -344,13 +367,34 @@ public class GameView extends View {
     }
 
     public void update() {
-        if (showing_whole_page) move_backward_whole_bitmap();
-        else {
+//        if (showing_whole_page) move_backward_whole_bitmap();
+//        else {
+//            move_bitmaps();
+//            remove_left_off_screen();
+//        }
+
+        if (egg_on_move) {
             move_bitmaps();
             remove_left_off_screen();
         }
 
+        showing_whole_page = false;
+
         invalidate();
+    }
+
+    private Path arrayList_to_Path() {
+        Path path = new Path();
+
+        for (int i = 0; i < trajectory.size(); i++) {
+            int x = trajectory.get(i).get(0);
+            int y = trajectory.get(i).get(1);
+
+            if (i == 0) path.moveTo(x, y);
+            else path.lineTo(x, y);
+        }
+
+        return path;
     }
 
     private void remove_left_off_screen() {
@@ -414,9 +458,23 @@ public class GameView extends View {
     }
 
     private void move_bitmaps() {
+        if (trajectory.size() > 1) {
+            egg_x = trajectory.get(0).get(0) - egg_con_w / 2;
+            egg_y = trajectory.get(0).get(1) - egg_con_h / 2;
+            xSpeed = trajectory.get(1).get(0) - trajectory.get(0).get(0);
+
+            trajectory.remove(0);
+        } else {
+            move_left = 0;
+            egg_y += ySpeed;
+            if (egg_y + e_h > floor_y) {
+                game_over = true;
+                game_over_time = System.currentTimeMillis();
+            }
+        }
+
         danger_init_x += xSpeed * move_left;
         game_scree_last_x += xSpeed * move_left;
-
 
         for (int i = 0; i < danger_data.size(); i++) {
             int x = danger_data.get(i).get(0);
@@ -426,6 +484,11 @@ public class GameView extends View {
         for (int i = 0; i < cloud_data.size(); i++) {
             int x = cloud_data.get(i).get(0);
             cloud_data.get(i).set(0, x + xSpeed * move_left);
+        }
+
+        for (int i = 0; i < trajectory.size(); i++) {
+            int x = trajectory.get(i).get(0);
+            trajectory.get(i).set(0, x + xSpeed * move_left);
         }
 
         container_data.replaceAll(integer -> integer + xSpeed * move_left);
@@ -459,21 +522,57 @@ public class GameView extends View {
     }
 
     public Rect getContainerCollision() {
-        int x = container_data.get(0);
-        int y = con_y;
-        int xi = 0;
-        int yi = 30 * con_h / 150;
-        int w = 55 * con_w / 115;
-        int h = 60 * con_h / 150;
-
-        return new Rect(x + xi, y + yi, x + xi + w, y + yi + h);
+        return new Rect(egg_con_x + egg_con_xi, egg_con_y + egg_con_yi, egg_con_x + egg_con_xi + egg_con_w, egg_con_y + egg_con_yi + egg_con_h);
     }
 
     public void calculate_trajectory() {
+        trajectory = new ArrayList<>();
+        int dx = (current_x - tap_x) * -1;
+        int dy = (current_y - tap_y) * -1;
+        if (dx <= 0 || dy >= 0) {
+            return;
+        }
 
+        int trajectoryMultiplier = 7;
+        int D = dx * trajectoryMultiplier;
+        int peakX = tap_x + D;
+        int peakY = Math.max(tap_y + dy * trajectoryMultiplier, 0);
+        int h = peakX;
+        int k = peakY;
+
+        int numerator = tap_y - k;
+        int denominator = (tap_x - h) * (tap_x - h);
+        if (denominator == 0) {
+            return;
+        }
+
+        double a = (double) numerator / denominator;
+
+        int xStart = tap_x;
+        int xEnd = tap_x + trajectoryMultiplier * D;
+        int yEnd = (int) (a * Math.pow(xEnd - h, 2) + k);
+        double totalDistance = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - tap_y, 2));
+        int stepSize = xSpeed;
+        int minSteps = 25;
+        int steps = Math.max((int) (totalDistance / stepSize), minSteps);
+        for (int i = 0; i <= steps; i++) {
+            double t = (double) i / steps;
+            int x = (int) (xStart + t * (xEnd - xStart));
+            int y = (int) (a * Math.pow(x - h, 2) + k);
+
+            if (y > tap_y) {
+                break;
+            }
+
+            ArrayList<Integer> point = new ArrayList<>();
+            point.add(x);
+            point.add(y);
+            trajectory.add(point);
+        }
     }
 
     public void start_move_egg() {
-
+        egg_on_move = !trajectory.isEmpty();
+        move_left = -1;
     }
 }

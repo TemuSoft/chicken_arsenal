@@ -137,11 +137,21 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         layout_dialog.setVisibility(VISIBLE);
 
         status.setText(R.string.level_faild);
-        egg_left.setText(R.string.eggs_left + " " + gameView.remain_eggs);
+        egg_left.setText(getResources().getString(R.string.eggs_left) + " " + gameView.remain_eggs);
         chicken.setImageResource(R.drawable.chicken_stand);
 
         next_again.setOnClickListener(View -> {
             Player.button(soundMute);
+
+            gameView.playLevel++;
+            if (gameView.playLevel > 40) gameView.playLevel = 40;
+
+            if (gameView.playLevel > gameView.lastLevelActive)
+                gameView.lastLevelActive = gameView.playLevel;
+
+            editor.putInt("playLevel", gameView.playLevel);
+            editor.putInt("lastLevelActive", gameView.lastLevelActive);
+            editor.apply();
 
             intent = new Intent(GameActivity.this, GameActivity.class);
             startActivity(intent);
@@ -158,7 +168,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         layout_dialog.setVisibility(VISIBLE);
 
         status.setText(R.string.level_completed);
-        egg_left.setText(R.string.eggs_left + " " + gameView.remain_eggs);
+        egg_left.setText(getResources().getString(R.string.eggs_left) + " " + gameView.remain_eggs);
         chicken.setImageResource(R.drawable.chicken_fly);
 
         next_again.setOnClickListener(View -> {
@@ -221,10 +231,10 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
     private void processActionDown(int x, int y) {
         Rect clicked = new Rect(x, y, x, y);
         if (Rect.intersects(clicked, gameView.getContainerCollision())) {
-            gameView.tap_x = x;
-            gameView.tap_y = y;
-            gameView.current_x = x;
-            gameView.current_y = y;
+            gameView.tap_x = gameView.egg_con_x + gameView.egg_con_w / 2;
+            gameView.tap_y = gameView.egg_con_y + gameView.egg_con_h / 2;
+            gameView.current_x = gameView.tap_x;
+            gameView.current_y = gameView.tap_y;
 
             gameView.getting_trajectory = true;
         }
