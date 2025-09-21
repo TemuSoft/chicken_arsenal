@@ -112,6 +112,9 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         Runnable r = new Runnable() {
             public void run() {
                 if (gameView.isPlaying) {
+                    if (gameView.getting_trajectory)
+                        gameView.calculate_trajectory();
+
                     if (gameView.game_over && gameView.game_over_time + gameView.duration < System.currentTimeMillis())
                         game_over();
 
@@ -126,7 +129,7 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
                 }
             }
         };
-        handler.postDelayed(r, 20);
+        handler.postDelayed(r, 30);
     }
 
     private void game_over() {
@@ -253,7 +256,5 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
         gameView.current_x = x;
         gameView.current_y = y;
-
-        gameView.calculate_trajectory();
     }
 }

@@ -36,11 +36,11 @@ public class GameView extends View {
     int dan_w_0, dan_h_0, dan_w_1, dan_h_1, dan_w_2, dan_h_2;
     int s_y, ground_y, floor_y, con_y, basket_y;
     int egg_x, egg_y;
-    int danger_init_x, gap, game_scree_last_x;
+    int danger_init_x, gap, game_screen_last_x;
     int move_left = 0;
     int in_col_clouds = 3, removed_cloud;
     boolean showing_whole_page = true;
-    int showing_distance, showing_distance_remain, showing_move_left = -1;
+    int showing_distance, showing_distance_remain, showing_move_left = -3;
 
     ArrayList<Bitmap> clouds = new ArrayList<>();
     ArrayList<Bitmap> dangers = new ArrayList<>();
@@ -193,8 +193,8 @@ public class GameView extends View {
             basket_y = floor_y - basket_h;
             danger_init_x += basket_w + gap * 2;
         }
-        game_scree_last_x = danger_init_x;
-        showing_distance = game_scree_last_x - screenX;
+        game_screen_last_x = danger_init_x;
+        showing_distance = game_screen_last_x - screenX;
         showing_distance_remain = showing_distance;
         add_ground_data(true);
         add_cloud_data(true);
@@ -218,7 +218,7 @@ public class GameView extends View {
         x -= gap;
 
         if (multiple) {
-            while (x <= game_scree_last_x) {
+            while (x <= game_screen_last_x) {
                 ground_data.add(x);
                 x += g_w - gap * 2;
             }
@@ -367,18 +367,16 @@ public class GameView extends View {
     }
 
     public void update() {
-//        if (showing_whole_page) move_backward_whole_bitmap();
-//        else {
-//            move_bitmaps();
-//            remove_left_off_screen();
-//        }
-
-        if (egg_on_move) {
+        if (showing_whole_page) move_backward_whole_bitmap();
+        else {
             move_bitmaps();
             remove_left_off_screen();
         }
-
-        showing_whole_page = false;
+//
+//        if (egg_on_move) {
+//            move_bitmaps();
+//            remove_left_off_screen();
+//        }
 
         invalidate();
     }
@@ -408,12 +406,6 @@ public class GameView extends View {
             }
         }
 
-        if (!danger_data.isEmpty()) {
-            int s = danger_data.size() - 1;
-            if (danger_data.get(s).get(0) + ww[danger_data.get(s).get(3)] < screenX)
-                add_danger_data();
-        }
-
         for (int i = 0; i < ground_data.size(); i++) {
             if (ground_data.get(i) + g_w < 0) {
                 ground_data.remove(i);
@@ -433,7 +425,6 @@ public class GameView extends View {
                 break;
             }
         }
-
 
         for (int i = 0; i < sun_data.size(); i++) {
             if (sun_data.get(i) + s_w_h < 0) {
@@ -474,7 +465,7 @@ public class GameView extends View {
         }
 
         danger_init_x += xSpeed * move_left;
-        game_scree_last_x += xSpeed * move_left;
+        game_screen_last_x += xSpeed * move_left;
 
         for (int i = 0; i < danger_data.size(); i++) {
             int x = danger_data.get(i).get(0);
@@ -500,7 +491,7 @@ public class GameView extends View {
     private void move_backward_whole_bitmap() {
         showing_distance_remain += xSpeed * showing_move_left;
         danger_init_x += xSpeed * showing_move_left;
-        game_scree_last_x += xSpeed * showing_move_left;
+        game_screen_last_x += xSpeed * showing_move_left;
 
         for (int i = 0; i < danger_data.size(); i++) {
             int x = danger_data.get(i).get(0);
@@ -517,7 +508,7 @@ public class GameView extends View {
         sun_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
         ground_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
 
-        if (showing_distance_remain < 0) showing_move_left = 1;
+        if (showing_distance_remain < 0) showing_move_left = 3;
         else if (showing_distance_remain >= showing_distance) showing_whole_page = false;
     }
 
@@ -526,7 +517,8 @@ public class GameView extends View {
     }
 
     public void calculate_trajectory() {
-        trajectory = new ArrayList<>();
+        trajectory.clear();
+
         int dx = (current_x - tap_x) * -1;
         int dy = (current_y - tap_y) * -1;
         if (dx <= 0 || dy >= 0) {
@@ -535,8 +527,8 @@ public class GameView extends View {
 
         int trajectoryMultiplier = 7;
         int D = dx * trajectoryMultiplier;
-        int peakX = tap_x + D;
-        int peakY = Math.max(tap_y + dy * trajectoryMultiplier, 0);
+        int peakX = Math.min(tap_x + D, game_screen_last_x);
+        int peakY = Math.max(tap_y + dy * trajectoryMultiplier, screenY / 5);
         int h = peakX;
         int k = peakY;
 
@@ -552,7 +544,7 @@ public class GameView extends View {
         int xEnd = tap_x + trajectoryMultiplier * D;
         int yEnd = (int) (a * Math.pow(xEnd - h, 2) + k);
         double totalDistance = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - tap_y, 2));
-        int stepSize = xSpeed;
+        int stepSize = xSpeed * 5;
         int minSteps = 25;
         int steps = Math.max((int) (totalDistance / stepSize), minSteps);
         for (int i = 0; i <= steps; i++) {
