@@ -142,19 +142,16 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         status.setText(R.string.level_faild);
         egg_left.setText(getResources().getString(R.string.eggs_left) + " " + gameView.remain_eggs);
         chicken.setImageResource(R.drawable.chicken_stand);
+        next_again.setText(getResources().getString(R.string.play_again));
+
+        home_dialog.setOnClickListener(View -> {
+            Player.button(soundMute);
+
+            finish();
+        });
 
         next_again.setOnClickListener(View -> {
             Player.button(soundMute);
-
-            gameView.playLevel++;
-            if (gameView.playLevel > 40) gameView.playLevel = 40;
-
-            if (gameView.playLevel > gameView.lastLevelActive)
-                gameView.lastLevelActive = gameView.playLevel;
-
-            editor.putInt("playLevel", gameView.playLevel);
-            editor.putInt("lastLevelActive", gameView.lastLevelActive);
-            editor.apply();
 
             intent = new Intent(GameActivity.this, GameActivity.class);
             startActivity(intent);
@@ -174,14 +171,23 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         egg_left.setText(getResources().getString(R.string.eggs_left) + " " + gameView.remain_eggs);
         chicken.setImageResource(R.drawable.chicken_fly);
 
+        home_dialog.setOnClickListener(View -> {
+            Player.button(soundMute);
+
+            finish();
+        });
+
         next_again.setOnClickListener(View -> {
             Player.button(soundMute);
+
             gameView.playLevel++;
+            if (gameView.playLevel > 40) gameView.playLevel = 40;
+
             if (gameView.playLevel > gameView.lastLevelActive)
                 gameView.lastLevelActive = gameView.playLevel;
 
-            editor.putInt("lastLevelActive", gameView.lastLevelActive);
             editor.putInt("playLevel", gameView.playLevel);
+            editor.putInt("lastLevelActive", gameView.lastLevelActive);
             editor.apply();
 
             intent = new Intent(GameActivity.this, GameActivity.class);

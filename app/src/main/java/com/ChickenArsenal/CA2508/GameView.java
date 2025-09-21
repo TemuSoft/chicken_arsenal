@@ -28,7 +28,7 @@ public class GameView extends View {
     private int xSpeed, ySpeed;
     private Context context;
     int lastLevelActive, playLevel;
-    int total_eggs, remain_eggs, total_danger_type, danger_amount;
+    int total_eggs, remain_eggs, danger_amount;
 
     int active_egg;
     Bitmap cloud, sun, ground, egg, container_0, container_1, basket, danger_0, danger_1, danger_2;
@@ -40,7 +40,7 @@ public class GameView extends View {
     int move_left = 0;
     int in_col_clouds = 3, removed_cloud;
     boolean showing_whole_page = true;
-    int showing_distance, showing_distance_remain, showing_move_left = -3;
+    int showing_distance, showing_distance_remain, showing_move_left = -2;
 
     ArrayList<Bitmap> clouds = new ArrayList<>();
     ArrayList<Bitmap> dangers = new ArrayList<>();
@@ -50,10 +50,10 @@ public class GameView extends View {
     ArrayList<Integer> basket_data = new ArrayList<>();
     ArrayList<Integer> container_data = new ArrayList<>();
     ArrayList<Integer> ground_data = new ArrayList<>();
-    ArrayList<ArrayList<Integer>> trajectory = new ArrayList<>();
+    ArrayList<int[]> trajectory = new ArrayList<>();
 
     int tap_x, tap_y, current_x, current_y;
-    boolean getting_trajectory = false, egg_on_move = false;
+    boolean getting_trajectory = false, egg_on_move = false, move_remaining_parts;
     int egg_con_x, egg_con_y, egg_con_xi, egg_con_yi, egg_con_w, egg_con_h;
 
 
@@ -112,7 +112,7 @@ public class GameView extends View {
         floor_y = ground_y + g_h * 7 / 16;
 
         con_y = floor_y - con_h;
-        gap = con_w / 2;
+        gap = con_w / 3;
 
         cloud = Bitmap.createScaledBitmap(cloud, c_w, c_h, false);
         sun = Bitmap.createScaledBitmap(sun, s_w_h, s_w_h, false);
@@ -140,29 +140,32 @@ public class GameView extends View {
     }
 
     private void add_danger_data() {
-        total_danger_type = (playLevel < 10) ? 2 : 3;
-        danger_amount = Math.min(playLevel + 7, 15);
+        danger_amount = Math.min(playLevel + 5, 12);
 
         if (danger_init_x == 0) {
             container_data.add(screenX / 2 - con_w / 2);
-            danger_init_x = container_data.get(0) + con_w + screenX / 3 + random.nextInt(screenX / 3);
+            danger_init_x = container_data.get(0) + con_w + screenX / 4 + random.nextInt(screenX / 4);
         } else {
             danger_init_x += screenX;
             container_data.add(danger_init_x);
-            danger_init_x += con_w + screenX / 3 + random.nextInt(screenX / 3);
+            danger_init_x += con_w + screenX / 4 + random.nextInt(screenX / 4);
         }
 
         int[] ww = new int[]{dan_w_0, dan_w_1, dan_w_2};
         int[] hh = new int[]{dan_h_0, dan_h_1, dan_h_2};
         int[][] overlap_h = new int[][]{{47, 177}, {40, 126}, {25, 221},};
 
+        basket_data.add(danger_init_x);
+        basket_y = floor_y - basket_h;
+        danger_init_x += basket_w + gap;
+
         boolean basket_added = false;
         while (danger_amount > 1) {
             int index = random.nextInt(3);
             int max;
-            if (index == 0) max = 3;
-            else if (index == 1) max = 5;
-            else max = 2;
+            if (index == 0) max = 2;
+            else if (index == 1) max = 4;
+            else max = 1;
             int count = random.nextInt(max) + 1;
             if (count > danger_amount) count = danger_amount;
 
@@ -178,12 +181,12 @@ public class GameView extends View {
             data.add(hh[index] - gap_h);
             danger_data.add(data);
 
-            danger_init_x += ww[index] + gap * 2;
+            danger_init_x += ww[index] + gap;
 
             if (random.nextInt(3) == 1 && !basket_added) {
                 basket_data.add(danger_init_x);
                 basket_y = floor_y - basket_h;
-                danger_init_x += basket_w + gap * 2;
+                danger_init_x += basket_w + gap;
                 basket_added = true;
             }
         }
@@ -191,7 +194,7 @@ public class GameView extends View {
         if (!basket_added) {
             basket_data.add(danger_init_x);
             basket_y = floor_y - basket_h;
-            danger_init_x += basket_w + gap * 2;
+            danger_init_x += basket_w + gap;
         }
         game_screen_last_x = danger_init_x;
         showing_distance = game_screen_last_x - screenX;
@@ -368,25 +371,54 @@ public class GameView extends View {
 
     public void update() {
         if (showing_whole_page) move_backward_whole_bitmap();
-        else {
+        else if (egg_on_move) {
             move_bitmaps();
             remove_left_off_screen();
+            check_intersection();
         }
-//
-//        if (egg_on_move) {
-//            move_bitmaps();
-//            remove_left_off_screen();
-//        }
 
         invalidate();
+    }
+
+    private void check_intersection() {
+        int[] ww = new int[]{dan_w_0, dan_w_1, dan_w_2};
+        int[] hh = new int[]{dan_h_0, dan_h_1, dan_h_2};
+        for (int i = 0; i < danger_data.size(); i++) {
+            int x = danger_data.get(i).get(0);
+            int y = danger_data.get(i).get(1);
+            int count = danger_data.get(i).get(2);
+            int index = danger_data.get(i).get(3);
+            int height = danger_data.get(i).get(4);
+            int mw = ww[index] / 6;
+
+            if (x + ww[index] < 0 || x > screenX) continue;
+            y = floor_y - hh[index];
+            Rect danger = new Rect(x + mw, y, x + ww[index] - mw, y + hh[index]);
+
+            if (Rect.intersects(danger, getEggCollision())) {
+                game_over = true;
+                game_over_time = System.currentTimeMillis();
+            }
+        }
+
+        if (Rect.intersects(getEggCollision(), getBasketCollision())) {
+            if (remain_eggs < total_eggs) {
+                remain_eggs ++;
+                egg_on_move = false;
+                add_danger_data();
+            } else {
+                game_won = true;
+                game_over_time = System.currentTimeMillis();
+            }
+        }
     }
 
     private Path arrayList_to_Path() {
         Path path = new Path();
 
         for (int i = 0; i < trajectory.size(); i++) {
-            int x = trajectory.get(i).get(0);
-            int y = trajectory.get(i).get(1);
+            int x = trajectory.get(i)[0];
+            int y = trajectory.get(i)[1];
 
             if (i == 0) path.moveTo(x, y);
             else path.lineTo(x, y);
@@ -450,9 +482,9 @@ public class GameView extends View {
 
     private void move_bitmaps() {
         if (trajectory.size() > 1) {
-            egg_x = trajectory.get(0).get(0) - egg_con_w / 2;
-            egg_y = trajectory.get(0).get(1) - egg_con_h / 2;
-            xSpeed = trajectory.get(1).get(0) - trajectory.get(0).get(0);
+            egg_x = trajectory.get(0)[0] - egg_con_w / 2;
+            egg_y = trajectory.get(0)[1] - egg_con_h / 2;
+            xSpeed = trajectory.get(1)[0] - trajectory.get(0)[0];
 
             trajectory.remove(0);
         } else {
@@ -478,8 +510,8 @@ public class GameView extends View {
         }
 
         for (int i = 0; i < trajectory.size(); i++) {
-            int x = trajectory.get(i).get(0);
-            trajectory.get(i).set(0, x + xSpeed * move_left);
+            int x = trajectory.get(i)[0];
+            trajectory.get(i)[0] = x + xSpeed * move_left;
         }
 
         container_data.replaceAll(integer -> integer + xSpeed * move_left);
@@ -508,12 +540,26 @@ public class GameView extends View {
         sun_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
         ground_data.replaceAll(integer -> integer + xSpeed * showing_move_left);
 
-        if (showing_distance_remain < 0) showing_move_left = 3;
+        if (showing_distance_remain < 0) showing_move_left = 2;
         else if (showing_distance_remain >= showing_distance) showing_whole_page = false;
     }
 
     public Rect getContainerCollision() {
         return new Rect(egg_con_x + egg_con_xi, egg_con_y + egg_con_yi, egg_con_x + egg_con_xi + egg_con_w, egg_con_y + egg_con_yi + egg_con_h);
+    }
+
+    public Rect getEggCollision() {
+        int mw = e_w / 6;
+        int mh = e_h / 6;
+        return new Rect(egg_x + mw, egg_y + mh, egg_x + e_w - mw, egg_y + e_h - mh);
+    }
+
+    public Rect getBasketCollision() {
+        int x = basket_data.get(0);
+        int y = basket_y;
+        int mw = basket_w / 6;
+        int mh = basket_h / 6;
+        return new Rect(x + mw, y + mh, x + basket_w - mw, y + basket_h - mh);
     }
 
     public void calculate_trajectory() {
@@ -528,7 +574,7 @@ public class GameView extends View {
         int trajectoryMultiplier = 7;
         int D = dx * trajectoryMultiplier;
         int peakX = Math.min(tap_x + D, game_screen_last_x);
-        int peakY = Math.max(tap_y + dy * trajectoryMultiplier, screenY / 5);
+        int peakY = Math.max(tap_y + dy * trajectoryMultiplier, screenY / 7);
         int h = peakX;
         int k = peakY;
 
@@ -544,9 +590,10 @@ public class GameView extends View {
         int xEnd = tap_x + trajectoryMultiplier * D;
         int yEnd = (int) (a * Math.pow(xEnd - h, 2) + k);
         double totalDistance = Math.sqrt(Math.pow(xEnd - xStart, 2) + Math.pow(yEnd - tap_y, 2));
-        int stepSize = xSpeed * 5;
+        int stepSize = xSpeed * 3;
         int minSteps = 25;
-        int steps = Math.max((int) (totalDistance / stepSize), minSteps);
+        int maxSteps = Math.min((int) (totalDistance / stepSize), 250);
+        int steps = Math.max(maxSteps, minSteps);
         for (int i = 0; i <= steps; i++) {
             double t = (double) i / steps;
             int x = (int) (xStart + t * (xEnd - xStart));
@@ -555,11 +602,7 @@ public class GameView extends View {
             if (y > tap_y) {
                 break;
             }
-
-            ArrayList<Integer> point = new ArrayList<>();
-            point.add(x);
-            point.add(y);
-            trajectory.add(point);
+            trajectory.add(new int[]{x, y});
         }
     }
 
