@@ -10,6 +10,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.view.View;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ public class GameView extends View {
     boolean isPlaying = true, game_over, game_won;
     int duration = 1000;
     long game_over_time, game_won_time = 0;
+    private Handler handler;
 
     int score;
     private int xSpeed, ySpeed;
@@ -64,6 +66,7 @@ public class GameView extends View {
         resources = res;
         context = mContext;
         random = new Random();
+        handler = new Handler();
 
         sharedPreferences = context.getSharedPreferences("hienArsen12o8", context.MODE_PRIVATE);
         lastLevelActive = sharedPreferences.getInt("lastLevelActive", 1);
@@ -196,7 +199,9 @@ public class GameView extends View {
             basket_y = floor_y - basket_h;
             danger_init_x += basket_w + gap;
         }
+        danger_init_x += screenX;
         game_screen_last_x = danger_init_x;
+
         showing_distance = game_screen_last_x - screenX;
         showing_distance_remain = showing_distance;
         add_ground_data(true);
@@ -405,12 +410,29 @@ public class GameView extends View {
             if (remain_eggs < total_eggs) {
                 remain_eggs ++;
                 egg_on_move = false;
-                add_danger_data();
+                move_remaining_distance();
             } else {
                 game_won = true;
                 game_over_time = System.currentTimeMillis();
             }
         }
+    }
+
+    private void move_remaining_distance() {
+        Runnable r = () -> {
+            egg_x -= xSpeed * 4;
+            move_left_bitmaps(-4);
+
+            if (game_screen_last_x > screenX) move_remaining_distance();
+            else {
+                add_danger_data();
+                showing_whole_page = true;
+                showing_move_left = 2;
+                move_backward_whole_bitmap();
+            }
+        };
+
+        handler.postDelayed(r, 30);
     }
 
     private Path arrayList_to_Path() {
@@ -496,6 +518,10 @@ public class GameView extends View {
             }
         }
 
+        move_left_bitmaps(move_left);
+    }
+
+    private void move_left_bitmaps(int move_left) {
         danger_init_x += xSpeed * move_left;
         game_screen_last_x += xSpeed * move_left;
 
