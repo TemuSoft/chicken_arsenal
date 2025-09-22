@@ -12,7 +12,6 @@ import android.graphics.Path;
 import android.graphics.Rect;
 import android.os.Handler;
 import android.view.View;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Random;
@@ -57,7 +56,7 @@ public class GameView extends View {
     ArrayList<int[]> trajectory = new ArrayList<>();
 
     int tap_x, tap_y, current_x, current_y;
-    boolean getting_trajectory = false, egg_on_move = false, move_remaining_distance = false;
+    boolean getting_trajectory = false, egg_on_move = false, cover_remaining_distance = false;
     int egg_con_x, egg_con_y, egg_con_xi, egg_con_yi, egg_con_w, egg_con_h;
 
 
@@ -363,7 +362,7 @@ public class GameView extends View {
             canvas.drawPath(arrayList_to_Path(), paint);
         }
 
-        if (egg_on_move || move_remaining_distance) {
+        if (egg_on_move || cover_remaining_distance) {
             canvas.drawBitmap(egg, egg_x, egg_y, paint);
         }
 
@@ -373,6 +372,22 @@ public class GameView extends View {
             if (egg_on_move && i == 0) canvas.drawBitmap(container_0, x, con_y, paint);
             else canvas.drawBitmap(container_1, x, con_y, paint);
         }
+
+        paint.setTextSize(e_w * 3 / 7);
+        paint.setStrokeWidth(5);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setColor(getResources().getColor(R.color.yellow));
+        paint.setTextAlign(Paint.Align.CENTER);
+        int x = Math.max((total_eggs * e_w / 4) / 2, screenX / 8);
+        int y = floor_y - e_h * 6 / 5;
+
+        canvas.drawText(remain_eggs + "/" + total_eggs + " left", x, y, paint);
+        paint.setColor(getResources().getColor(R.color.white));
+        canvas.drawText(remain_eggs + "/" + total_eggs + " left", x + 3, y + 3, paint);
+        for (int i = 0; i < remain_eggs; i++) {
+            x = i * e_w / 4;
+            canvas.drawBitmap(egg, x, floor_y - e_h, paint);
+        }
     }
 
     private void setSpeed() {
@@ -381,7 +396,7 @@ public class GameView extends View {
     }
 
     public void update() {
-        if (move_remaining_distance)
+        if (cover_remaining_distance)
             move_remaining_distance();
 
         if (showing_whole_page) move_backward_whole_bitmap();
@@ -425,8 +440,8 @@ public class GameView extends View {
         remain_eggs--;
         if (remain_eggs > 0) {
             egg_on_move = false;
-            move_remaining_distance = true;
-            move_remaining_distance();
+            showing_whole_page = false;
+            cover_remaining_distance = true;
         } else {
             game_over = true;
             game_over_time = System.currentTimeMillis();
@@ -437,8 +452,8 @@ public class GameView extends View {
         move_left_bitmaps(-speed);
 
         if (game_screen_last_x <= screenX) {
+            cover_remaining_distance = false;
             add_danger_data();
-            move_remaining_distance = false;
         }
     }
 
@@ -490,13 +505,6 @@ public class GameView extends View {
         for (int i = 0; i < sun_data.size(); i++) {
             if (sun_data.get(i) + s_w_h < 0) {
                 sun_data.remove(i);
-                break;
-            }
-        }
-
-        for (int i = 0; i < basket_data.size(); i++) {
-            if (basket_data.get(i) + basket_w < 0) {
-                basket_data.remove(i);
                 break;
             }
         }
@@ -580,7 +588,7 @@ public class GameView extends View {
 
         int point = screenX / 2 - con_w / 2;
         int position = container_data.get(container_data.size() - 1);
-        boolean on_position = Math.abs(position - point) <= xSpeed + 1;
+        boolean on_position = Math.abs(position - point) <= xSpeed * 2;
 
         if (showing_distance_remain < 0) showing_move_left = speed;
         else if (on_position && showing_move_left == speed) showing_whole_page = false;
