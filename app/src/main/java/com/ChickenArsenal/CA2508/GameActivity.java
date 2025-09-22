@@ -213,7 +213,6 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
 
     @Override
     public void onBackPressed() {
-        finishAffinity();
         return;
     }
 

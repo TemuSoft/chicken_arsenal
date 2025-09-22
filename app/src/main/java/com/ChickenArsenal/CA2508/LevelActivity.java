@@ -40,9 +40,6 @@ public class LevelActivity extends AppCompatActivity {
         playLevel = sharedPreferences.getInt("playLevel", 1);
 
         setContentView(R.layout.activity_level);
-        playLevel = 15;
-        lastLevelActive = 45;
-
 
         layout_vertical = findViewById(R.id.layout_vertical);
         inflate = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
