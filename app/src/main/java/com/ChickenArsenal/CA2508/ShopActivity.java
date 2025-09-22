@@ -44,6 +44,7 @@ public class ShopActivity extends AppCompatActivity {
         lang = sharedPreferences.getString("lang", "");
         available_coin = sharedPreferences.getInt("available_coin", 0);
         active_egg = sharedPreferences.getInt("active_egg", 0);
+        available_coin = 50;
 
         setContentView(R.layout.activity_shop);
 
@@ -72,7 +73,7 @@ public class ShopActivity extends AppCompatActivity {
         for (int i = 1; i < 6; i++)
             bought_status.add(sharedPreferences.getBoolean("bought_status_" + i, false));
 
-        int[] coins = new int[]{0, 30, 50, 70, 100, 150};
+        int[] coins = new int[]{0, 5, 10, 20, 30, 40};
 
         int counter = 0;
         for (int i = 0; i < 2; i++) {

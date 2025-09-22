@@ -171,6 +171,10 @@ public class GameActivity extends AppCompatActivity implements View.OnTouchListe
         egg_left.setText(getResources().getString(R.string.eggs_left) + " " + gameView.remain_eggs);
         chicken.setImageResource(R.drawable.chicken_fly);
 
+        int available_coin = sharedPreferences.getInt("available_coin", 0);
+        editor.putInt("available_coin", available_coin + gameView.playLevel);
+        editor.apply();
+
         home_dialog.setOnClickListener(View -> {
             Player.button(soundMute);
 

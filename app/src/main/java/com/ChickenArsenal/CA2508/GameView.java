@@ -43,7 +43,8 @@ public class GameView extends View {
     int move_left = 0;
     int in_col_clouds = 3, removed_cloud;
     boolean showing_whole_page = true;
-    int showing_distance, showing_distance_remain, showing_move_left = -2;
+    int speed = 3;
+    int showing_distance, showing_distance_remain, showing_move_left = -speed;
 
     ArrayList<Bitmap> clouds = new ArrayList<>();
     ArrayList<Bitmap> dangers = new ArrayList<>();
@@ -56,7 +57,7 @@ public class GameView extends View {
     ArrayList<int[]> trajectory = new ArrayList<>();
 
     int tap_x, tap_y, current_x, current_y;
-    boolean getting_trajectory = false, egg_on_move = false, move_remaining_parts;
+    boolean getting_trajectory = false, egg_on_move = false, move_remaining_distance = false;
     int egg_con_x, egg_con_y, egg_con_xi, egg_con_yi, egg_con_w, egg_con_h;
 
 
@@ -74,8 +75,8 @@ public class GameView extends View {
         playLevel = sharedPreferences.getInt("playLevel", 1);
         active_egg = sharedPreferences.getInt("active_egg", 0);
 
-        total_eggs = playLevel / 3 + 2;
-        remain_eggs = 0;
+        total_eggs = Math.min(playLevel / 5 + 2, 7);
+        remain_eggs = total_eggs;
 
         int e = context.getResources().getIdentifier("egg_" + active_egg, "drawable", context.getPackageName());
         cloud = BitmapFactory.decodeResource(res, R.drawable.cloud);
@@ -153,7 +154,7 @@ public class GameView extends View {
             container_data.add(screenX / 2 - con_w / 2);
             danger_init_x = container_data.get(0) + con_w + screenX / 4 + random.nextInt(screenX / 4);
         } else {
-            danger_init_x += screenX / 2;
+            danger_init_x += screenX;
             container_data.add(danger_init_x);
             danger_init_x += con_w + screenX / 4 + random.nextInt(screenX / 4);
         }
@@ -162,7 +163,7 @@ public class GameView extends View {
         int[] hh = new int[]{dan_h_0, dan_h_1, dan_h_2};
         int[][] overlap_h = new int[][]{{47, 177}, {40, 126}, {25, 221},};
 
-        basket_data.add(danger_init_x);
+//        basket_data.add(danger_init_x);
         basket_y = floor_y - basket_h;
         danger_init_x += basket_w + gap;
 
@@ -204,7 +205,7 @@ public class GameView extends View {
             danger_init_x += basket_w + gap;
         }
 
-        danger_init_x += screenX / 2;
+        danger_init_x += screenX;
         game_screen_last_x = danger_init_x;
 
         showing_distance = game_screen_last_x - screenX;
@@ -221,7 +222,7 @@ public class GameView extends View {
         egg_con_h = 60 * con_h / 150;
 
         showing_whole_page = true;
-        showing_move_left = -2;
+        showing_move_left = -speed;
     }
 
     private void add_ground_data(boolean multiple) {
@@ -362,7 +363,7 @@ public class GameView extends View {
             canvas.drawPath(arrayList_to_Path(), paint);
         }
 
-        if (egg_on_move) {
+        if (egg_on_move || move_remaining_distance) {
             canvas.drawBitmap(egg, egg_x, egg_y, paint);
         }
 
@@ -380,6 +381,9 @@ public class GameView extends View {
     }
 
     public void update() {
+        if (move_remaining_distance)
+            move_remaining_distance();
+
         if (showing_whole_page) move_backward_whole_bitmap();
         else if (egg_on_move) {
             move_bitmaps();
@@ -405,33 +409,37 @@ public class GameView extends View {
             y = floor_y - hh[index];
             Rect danger = new Rect(x + mw, y, x + ww[index] - mw, y + hh[index]);
 
-            if (Rect.intersects(danger, getEggCollision())) {
-                game_over = true;
-                game_over_time = System.currentTimeMillis();
+            if (Rect.intersects(danger, getEggCollision()) && !game_over) {
+                game_over_status();
+                break;
             }
         }
 
         if (Rect.intersects(getEggCollision(), getBasketCollision())) {
-            remain_eggs++;
-            if (remain_eggs < total_eggs) {
-                egg_on_move = false;
-                move_remaining_distance();
-            } else {
-                game_won = true;
-                game_won_time = System.currentTimeMillis();
-            }
+            game_won = true;
+            game_won_time = System.currentTimeMillis();
+        }
+    }
+
+    private void game_over_status() {
+        remain_eggs--;
+        if (remain_eggs > 0) {
+            egg_on_move = false;
+            move_remaining_distance = true;
+            move_remaining_distance();
+        } else {
+            game_over = true;
+            game_over_time = System.currentTimeMillis();
         }
     }
 
     private void move_remaining_distance() {
-        Runnable r = () -> {
-            move_left_bitmaps(-4);
+        move_left_bitmaps(-speed);
 
-            if (game_screen_last_x > screenX) move_remaining_distance();
-            else add_danger_data();
-        };
-
-        handler.postDelayed(r, 30);
+        if (game_screen_last_x <= screenX) {
+            add_danger_data();
+            move_remaining_distance = false;
+        }
     }
 
     private Path arrayList_to_Path() {
@@ -512,8 +520,7 @@ public class GameView extends View {
             move_left = 0;
             egg_y += ySpeed;
             if (egg_y + e_h > floor_y) {
-                game_over = true;
-                game_over_time = System.currentTimeMillis();
+                game_over_status();
             }
         }
 
@@ -522,6 +529,7 @@ public class GameView extends View {
 
     private void move_left_bitmaps(int move_left) {
         egg_con_x += xSpeed * move_left;
+        egg_x += xSpeed * move_left;
 
         danger_init_x += xSpeed * move_left;
         game_screen_last_x += xSpeed * move_left;
@@ -549,6 +557,7 @@ public class GameView extends View {
 
     private void move_backward_whole_bitmap() {
         egg_con_x += xSpeed * showing_move_left;
+        egg_x += xSpeed * showing_move_left;
 
         showing_distance_remain += xSpeed * showing_move_left;
         danger_init_x += xSpeed * showing_move_left;
@@ -573,8 +582,8 @@ public class GameView extends View {
         int position = container_data.get(container_data.size() - 1);
         boolean on_position = Math.abs(position - point) <= xSpeed + 1;
 
-        if (showing_distance_remain < 0) showing_move_left = 2;
-        else if (on_position && showing_move_left == 2) showing_whole_page = false;
+        if (showing_distance_remain < 0) showing_move_left = speed;
+        else if (on_position && showing_move_left == speed) showing_whole_page = false;
     }
 
     public Rect getContainerCollision() {

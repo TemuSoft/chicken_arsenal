@@ -71,6 +71,9 @@ public class LevelActivity extends AppCompatActivity {
         start_game.setOnClickListener(View -> {
             Player.button(soundMute);
 
+            editor.putInt("playLevel", playLevel);
+            editor.apply();
+
             intent = new Intent(LevelActivity.this, GameActivity.class);
             startActivity(intent);
             finish();
