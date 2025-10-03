@@ -66,6 +66,7 @@ public class ShopActivity extends AppCompatActivity {
     }
 
     private void update_level_UI() {
+        coin.setText(available_coin + "");
         layout_vertical.removeAllViews();
         ArrayList<Boolean> bought_status = new ArrayList<>();
         bought_status.add(true);
