@@ -2,6 +2,6 @@ Name: Chicken Arsenal
 password: 6kenA12en0lA2
 Alias: chicken_arsenal
 Package ID: com.ChickenArsenal.CA2508
-Application version: 1.0
+Application version: 1.0    
 Build version: 1
 Min SDK version: 26

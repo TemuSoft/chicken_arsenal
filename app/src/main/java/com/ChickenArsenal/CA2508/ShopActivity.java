@@ -44,7 +44,6 @@ public class ShopActivity extends AppCompatActivity {
         lang = sharedPreferences.getString("lang", "");
         available_coin = sharedPreferences.getInt("available_coin", 0);
         active_egg = sharedPreferences.getInt("active_egg", 0);
-        available_coin = 50;
 
         setContentView(R.layout.activity_shop);
 
@@ -121,6 +120,7 @@ public class ShopActivity extends AppCompatActivity {
 
                             available_coin -= coins[finalCounter];
                             active_egg = finalCounter;
+                            editor.putBoolean("bought_status_" + finalCounter, true);
                             editor.putInt("active_egg", active_egg);
                             editor.putInt("available_coin", available_coin);
                             editor.apply();
